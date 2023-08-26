@@ -1,0 +1,106 @@
+#define ULTRASONIC_TRIGGER_PIN 11
+#define ULTRASONIC_ECHO_PIN 12
+#define MOTOR_RIGHT_PIN1 7
+#define MOTOR_RIGHT_PIN2 8
+#define MOTOR_LEFT_PIN1 9
+#define MOTOR_LEFT_PIN2 10
+#define IR_RIGHT_PIN 3
+#define IR_LEFT_PIN 2
+
+void setup() {
+  pinMode(IR_RIGHT_PIN, INPUT);
+  pinMode(IR_LEFT_PIN, INPUT);
+  pinMode(ULTRASONIC_TRIGGER_PIN, OUTPUT);
+  pinMode(ULTRASONIC_ECHO_PIN, INPUT);
+  pinMode(MOTOR_RIGHT_PIN1, OUTPUT);
+  pinMode(MOTOR_RIGHT_PIN2, OUTPUT);
+  pinMode(MOTOR_LEFT_PIN1, OUTPUT);
+  pinMode(MOTOR_LEFT_PIN2, OUTPUT);
+  Serial.begin(9600); // Start Serial communication
+}
+
+void loop() {
+  // Send ultrasonic pulse
+  digitalWrite(ULTRASONIC_TRIGGER_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(ULTRASONIC_TRIGGER_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(ULTRASONIC_TRIGGER_PIN, LOW);
+
+  // Read IR sensor values
+  int irRightValue = digitalRead(IR_RIGHT_PIN);
+  int irLeftValue = digitalRead(IR_LEFT_PIN);
+
+  // Print IR sensor values to Serial Monitor
+  Serial.print("IR Right: ");
+  Serial.print(irRightValue);
+  Serial.print("\tIR Left: ");
+  Serial.println(irLeftValue);
+
+  // Measure echo time to calculate distance
+  long duration = pulseIn(ULTRASONIC_ECHO_PIN, HIGH);
+  float distance = duration * 0.034 / 2; // Divide by 2 for one-way distance
+
+  // Print ultrasonic distance to Serial Monitor
+  Serial.print("Ultrasonic Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  // If obstacle detected by ultrasonic sensor within 10 cm, stop both motors
+  if (distance > 10 && distance < 50) {
+    moveMotors();
+  }
+  // If obstacle detected by right IR sensor, stop right motor and move left motor at full speed
+  else if (irRightValue == LOW) {
+    stopRightMotor();
+    moveLeftMotorFullSpeed();
+  }
+  // If obstacle detected by left IR sensor, stop left motor and move right motor at full speed
+  else if (irLeftValue == LOW) {
+    stopLeftMotor();
+    moveRightMotorFullSpeed();
+  }
+  // If no obstacle detected, rotate both motors at full speed
+  else {
+    stopMotors();
+  }
+}
+
+void moveMotors() {
+  digitalWrite(MOTOR_RIGHT_PIN1, HIGH);
+  digitalWrite(MOTOR_RIGHT_PIN2, LOW);
+  digitalWrite(MOTOR_LEFT_PIN1, HIGH);
+  digitalWrite(MOTOR_LEFT_PIN2, LOW);
+  
+  analogWrite(MOTOR_RIGHT_PIN1, 255); // Full speed (255 is max value)
+  analogWrite(MOTOR_LEFT_PIN1, 255);  // Full speed (255 is max value)
+}
+
+void stopMotors() {
+  digitalWrite(MOTOR_RIGHT_PIN1, LOW);
+  digitalWrite(MOTOR_RIGHT_PIN2, LOW);
+  digitalWrite(MOTOR_LEFT_PIN1, LOW);
+  digitalWrite(MOTOR_LEFT_PIN2, LOW);
+}
+
+void moveRightMotorFullSpeed() {
+  digitalWrite(MOTOR_RIGHT_PIN1, HIGH);
+  digitalWrite(MOTOR_RIGHT_PIN2, LOW);
+  analogWrite(MOTOR_RIGHT_PIN1, 255); // Full speed (255 is max value)
+}
+
+void moveLeftMotorFullSpeed() {
+  digitalWrite(MOTOR_LEFT_PIN1, HIGH);
+  digitalWrite(MOTOR_LEFT_PIN2, LOW);
+  analogWrite(MOTOR_LEFT_PIN1, 255); // Full speed (255 is max value)
+}
+
+void stopRightMotor() {
+  digitalWrite(MOTOR_RIGHT_PIN1, LOW);
+  digitalWrite(MOTOR_RIGHT_PIN2, LOW);
+}
+
+void stopLeftMotor() {
+  digitalWrite(MOTOR_LEFT_PIN1, LOW);
+  digitalWrite(MOTOR_LEFT_PIN2, LOW);
+}
